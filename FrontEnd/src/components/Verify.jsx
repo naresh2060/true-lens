@@ -19,7 +19,7 @@ const Verify = () => {
   const [verificationData, setVerificationData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   
-  const TargetURL = "http://10.48.125.53:8080/verifymedia";
+  const TargetURL = "https://api.truelens.qzz.io/verifymedia";
 
   // Handle file selection
   const handleFileChange = (e) => {

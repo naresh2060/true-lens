@@ -24,7 +24,7 @@ const Camera = ({ onNavigateHome }) => {
   const captureImage = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const TARGET_URL = "http://10.48.125.53:8080/uploadmedia";
+    const TARGET_URL = "https://api.truelens.qzz.io/uploadmedia";
   
     if (!video || !canvas || !stream) {
       triggerAlert('error', 'System Error', 'Camera interface not initialized.');
@@ -61,13 +61,30 @@ const Camera = ({ onNavigateHome }) => {
         body: formData, 
       });
   
+      // Handle Errors (Flask returns JSON for errors, so we parse as text/json)
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Server Error: ${response.status} - ${errorText}`);
+        throw new Error(errorText || `Server Error: ${response.status}`);
       }
   
-      const uploadResult = await response.json();
-      downloadFileFromUrl(uploadResult.download_url);
+      // --- MODIFIED DOWNLOAD LOGIC START ---
+      // 1. Capture the response as a Blob (Binary file)
+      const signedBlob = await response.blob();
+      
+      // 2. Create a local URL for the signed file
+      const downloadUrl = window.URL.createObjectURL(signedBlob);
+  
+      // 3. Trigger direct download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `signed_${fileName}`; // This matches your Flask signed_filename logic
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  
+      // 4. Cleanup memory
+      window.URL.revokeObjectURL(downloadUrl);
+      // --- MODIFIED DOWNLOAD LOGIC END ---
   
       const displayUrl = URL.createObjectURL(pngImageFile);
       const imageObject = {
@@ -75,7 +92,7 @@ const Camera = ({ onNavigateHome }) => {
         rawPixels: rawPixelData,
         pngFile: pngImageFile,
         hash: secureHash,
-        serverUrl: uploadResult.download_url,
+        serverUrl: null, // Set to null as file was streamed directly
         displayUrl: displayUrl,
         fileName: fileName,
         dateTime: now.toLocaleString()
@@ -84,7 +101,7 @@ const Camera = ({ onNavigateHome }) => {
       setCapturedImages((prev) => [imageObject, ...prev]);
       
       triggerAlert('success', 'Secure Capture Saved', 'Media hash verified and recorded on protocol.');
-
+  
       const metaOnly = { ...imageObject, rawPixels: null, pngFile: null };
       localStorage.setItem('last_verified_capture', JSON.stringify(metaOnly));
   
@@ -109,12 +126,14 @@ const Camera = ({ onNavigateHome }) => {
   const downloadFileFromUrl = (fileUrl, customName = 'truelens-capture.png') => {
     const link = document.createElement('a');
     link.href = fileUrl;
-    link.target = '_blank';
-    link.download = customName;
+    link.setAttribute('download', customName); // Attempt to force download
+    link.setAttribute('target', '_blank');    // Fallback: open in new tab if download fails
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
   };
+  
+  
   
   const computeRawPixelHash = async (uint8Array) => {
     const hashBuffer = await crypto.subtle.digest('SHA-256', uint8Array);

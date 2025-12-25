@@ -17,7 +17,7 @@ const Register = ({ onNavigateHome }) => {
   const [deviceName, setDeviceName] = useState('');
   const [alert, setAlert] = useState(null);
 
-  const API_BASE_URL = "http://10.48.125.53:8080";
+  const API_BASE_URL = "https://api.truelens.qzz.io";
 
   const triggerAlert = (variant, title, message) => {
     setAlert({ variant, title, message });
@@ -36,6 +36,20 @@ const Register = ({ onNavigateHome }) => {
     }
   };
 
+
+  // Slug Converter
+  const convertToSlug = (text) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9 -]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  };
+
   useEffect(() => {
     const fetchCameraName = async () => {
       const name = await getCameraName();
@@ -50,8 +64,8 @@ const Register = ({ onNavigateHome }) => {
 
     try {
       const formData = new FormData();
-      formData.append("device_name", deviceName);
-      formData.append("hardware_id", cameraName);
+      formData.append("device_name", convertToSlug(deviceName));
+      formData.append("hardware_id", convertToSlug(cameraName));
 
       const response = await fetch(`${API_BASE_URL}/register`, {
         method: "POST",
