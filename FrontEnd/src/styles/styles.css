@@ -1,0 +1,35 @@
+.videoField {
+    width: 100vw;
+    height: 100vh;
+}
+.captureCamera button {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    width:80px;
+    height: 80px;   
+    border-radius:555px;
+    cursor: pointer;
+    font-size: 30px; 
+    transition: background 0.3s;
+    border: 2px solid #ccc;
+
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+
+    display: flex;
+    align-items: center;
+
+    justify-content: center;
+}
+.Time{
+    z-index: 1000;
+    color: red;
+
+    font-size: 24px;
+    font-weight: bold;
+}
+.activeIcon {
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
